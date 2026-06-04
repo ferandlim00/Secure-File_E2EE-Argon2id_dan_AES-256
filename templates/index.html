@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SecureFile — Proteksi Berkas AES-256 &amp; Argon2</title>
+    <meta name="description" content="Enkripsi dan dekripsi file secara End-to-End langsung di browser menggunakan Argon2id dan AES-256-GCM. File tidak pernah dikirim ke server.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────── -->
+<header>
+    <div class="logo-text">
+        <h1>SecureFile</h1>
+        <p>AES-256 & Argon2</p>
+    </div>
+</header>
+
+<div style="text-align: center; margin-bottom: 24px; max-width: 800px; padding: 0 16px;">
+    <h2 style="font-size: 1.1rem; font-weight: 600; color: var(--text); line-height: 1.4;">Proteksi Berkas End-to-End pada Lingkungan Browser Menggunakan Kriptografi AES-256 dan Argon2</h2>
+</div>
+
+<!-- ── TAB BAR ────────────────────────────────────────────────────── -->
+<div class="tab-bar">
+    <button id="tab-btn-encrypt" class="tab-btn active" onclick="switchTab('encrypt')">
+        <span class="tab-icon">🔒</span> Enkripsi File
+    </button>
+    <button id="tab-btn-decrypt" class="tab-btn" onclick="switchTab('decrypt')">
+        <span class="tab-icon">🔓</span> Dekripsi File
+    </button>
+</div>
+
+<!-- ── MAIN CONTENT ───────────────────────────────────────────────── -->
+<div class="main-content">
+
+    <!-- ════════════ ENCRYPT PANEL ════════════ -->
+    <div id="panel-encrypt" class="tab-panel active">
+
+        <!-- Upload Card -->
+        <div class="card">
+            <div class="card-title">📁 Pilih File yang Akan Dienkripsi</div>
+
+            <div id="drop-encrypt" class="drop-zone">
+                <input type="file" id="input-encrypt" accept="*/*">
+                <span class="drop-icon">📂</span>
+                <div class="drop-title">Seret & lepas file di sini</div>
+                <div class="drop-subtitle">atau klik untuk memilih file — semua tipe file didukung (maks. 100 MB)</div>
+            </div>
+
+            <div id="file-info-encrypt" class="file-info">
+                <div class="file-info-icon">📄</div>
+                <div class="file-info-details">
+                    <div class="file-info-name">—</div>
+                    <div class="file-info-meta">—</div>
+                </div>
+                <button class="file-remove-btn" onclick="removeFile('encrypt')" title="Hapus file">✕</button>
+            </div>
+
+            <!-- Secret Key -->
+            <div class="input-group">
+                <label class="input-label" for="key-encrypt">🔑 Secret Key (Password Enkripsi)</label>
+                <div class="input-wrap">
+                    <input
+                        type="password"
+                        id="key-encrypt"
+                        class="text-input"
+                        placeholder="Masukkan secret key yang kuat..."
+                        autocomplete="new-password"
+                        oninput="onPasswordInput('encrypt')"
+                    >
+                    <button class="eye-btn" id="eye-encrypt" onclick="togglePassword('encrypt')" type="button">👁️</button>
+                </div>
+                <div class="strength-wrap">
+                    <div class="strength-bar-bg">
+                        <div class="strength-bar-fill" id="strength-fill-encrypt"></div>
+                    </div>
+                    <div class="strength-label" id="strength-label-encrypt"></div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button id="btn-encrypt" class="action-btn" onclick="handleEncrypt()">
+                🔒 Enkripsi File
+            </button>
+
+            <!-- Progress -->
+            <div id="progress-encrypt" class="progress-wrap">
+                <div class="progress-label">
+                    <span class="spinner"></span>
+                    <span id="progress-msg-encrypt">Memproses...</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Error Card (terpisah dari success) -->
+            <div id="error-encrypt" class="result-card result-error" style="display:none">
+                <div class="result-header">
+                    <span class="result-icon">❌</span>
+                    <div>
+                        <div class="result-title" id="error-msg-encrypt">Terjadi kesalahan.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Success -->
+            <div id="result-encrypt" class="result-card result-success">
+                <div class="result-header">
+                    <span class="result-icon">✅</span>
+                    <div>
+                        <div class="result-title">File berhasil dienkripsi!</div>
+                        <div class="result-subtitle" id="result-meta-encrypt">—</div>
+                    </div>
+                </div>
+                <a id="dl-btn-encrypt" class="download-btn" href="#" download>
+                    ⬇️ Unduh File <span class="dl-name">file.enc</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+    <!-- ════ END ENCRYPT PANEL ════ -->
+
+
+    <!-- ════════════ DECRYPT PANEL ════════════ -->
+    <div id="panel-decrypt" class="tab-panel">
+
+        <!-- Upload Card -->
+        <div class="card">
+            <div class="card-title">🔒 Pilih File Terenkripsi (.enc)</div>
+
+            <div id="drop-decrypt" class="drop-zone">
+                <input type="file" id="input-decrypt" accept=".enc">
+                <span class="drop-icon">🔒</span>
+                <div class="drop-title">Seret & lepas file .enc di sini</div>
+                <div class="drop-subtitle">atau klik untuk memilih — hanya file .enc yang valid</div>
+            </div>
+
+            <div id="file-info-decrypt" class="file-info">
+                <div class="file-info-icon">🔒</div>
+                <div class="file-info-details">
+                    <div class="file-info-name">—</div>
+                    <div class="file-info-meta">—</div>
+                </div>
+                <button class="file-remove-btn" onclick="removeFile('decrypt')" title="Hapus file">✕</button>
+            </div>
+
+            <!-- Secret Key -->
+            <div class="input-group">
+                <label class="input-label" for="key-decrypt">🔑 Secret Key (Password Dekripsi)</label>
+                <div class="input-wrap">
+                    <input
+                        type="password"
+                        id="key-decrypt"
+                        class="text-input"
+                        placeholder="Masukkan secret key yang sama saat enkripsi..."
+                        autocomplete="current-password"
+                    >
+                    <button class="eye-btn" id="eye-decrypt" onclick="togglePassword('decrypt')" type="button">👁️</button>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button id="btn-decrypt" class="action-btn" onclick="handleDecrypt()">
+                🔓 Dekripsi File
+            </button>
+
+            <!-- Progress -->
+            <div id="progress-decrypt" class="progress-wrap">
+                <div class="progress-label">
+                    <span class="spinner"></span>
+                    <span id="progress-msg-decrypt">Memproses...</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Error Card (terpisah dari success) -->
+            <div id="error-decrypt" class="result-card result-error" style="display:none">
+                <div class="result-header">
+                    <span class="result-icon">❌</span>
+                    <div>
+                        <div class="result-title" id="error-msg-decrypt">Terjadi kesalahan.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Result Success -->
+            <div id="result-decrypt" class="result-card result-success">
+                <div class="result-header">
+                    <span class="result-icon">✅</span>
+                    <div>
+                        <div class="result-title">File berhasil didekripsi!</div>
+                        <div class="result-subtitle" id="result-meta-decrypt">—</div>
+                    </div>
+                </div>
+                <div id="auth-badge-decrypt" class="auth-tag-badge" style="display:none;">
+                    ✅ Auth Tag AES-GCM Terverifikasi
+                </div>
+                <a id="dl-btn-decrypt" class="download-btn" href="#" download>
+                    ⬇️ Unduh File Asli — <span class="dl-name">file</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+    <!-- ════ END DECRYPT PANEL ════ -->
+
+
+    <!-- ════════════ ENCRYPTION INSPECTOR (shared) ════════════ -->
+    <!-- Encrypt Inspector -->
+    <div id="inspector-encrypt" class="inspector-card">
+        <div id="inspector-hdr-encrypt" class="inspector-header" onclick="toggleInspector('encrypt')">
+            <div class="inspector-header-left">
+                <span style="font-size:1.2rem">🔍</span>
+                <div>
+                    <div class="inspector-title">Encryption Inspector</div>
+                    <div class="inspector-subtitle">Bukti nyata proses Argon2id + AES-256-GCM step-by-step</div>
+                </div>
+            </div>
+            <span id="inspector-arrow-encrypt" class="inspector-arrow">▼</span>
+        </div>
+        <div id="inspector-body-encrypt" class="inspector-body"></div>
+    </div>
+
+    <!-- Decrypt Inspector -->
+    <div id="inspector-decrypt" class="inspector-card">
+        <div id="inspector-hdr-decrypt" class="inspector-header" onclick="toggleInspector('decrypt')">
+            <div class="inspector-header-left">
+                <span style="font-size:1.2rem">🔍</span>
+                <div>
+                    <div class="inspector-title">Decryption Inspector</div>
+                    <div class="inspector-subtitle">Verifikasi Argon2id + AES-256-GCM step-by-step</div>
+                </div>
+            </div>
+            <span id="inspector-arrow-decrypt" class="inspector-arrow">▼</span>
+        </div>
+        <div id="inspector-body-decrypt" class="inspector-body"></div>
+    </div>
+
+</div>
+<!-- ── END MAIN CONTENT ────────────────────────────────────────────── -->
+
+<!-- ── SECURITY BAR ───────────────────────────────────────────────── -->
+<div class="security-bar">
+    🔐 <strong>End-to-End Encrypted.</strong>
+    Semua proses enkripsi &amp; dekripsi terjadi <strong>100% di browser Anda</strong> menggunakan
+    <strong>Argon2id</strong> (WebAssembly) + <strong>AES-256-GCM</strong> (Web Crypto API).
+    File dan secret key <strong>tidak pernah dikirim ke server</strong>.
+</div>
+
+<!-- argon2-browser: Argon2id via WebAssembly (berjalan di browser, bukan server) -->
+<script src="https://cdn.jsdelivr.net/npm/argon2-browser@1.18.0/dist/argon2-bundled.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
