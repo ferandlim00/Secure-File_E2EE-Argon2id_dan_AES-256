@@ -228,5 +228,4 @@ Proyek ini dibuat untuk keperluan akademis — mata kuliah **Keamanan Komputer**
 ---
 
 *SecureFile — Argon2id · AES-256-GCM · E2EE · Client-Side Only*
-#   S e c u r e - F i l e _ E 2 E E - A r g o n 2 i d _ d a n _ A E S - 2 5 6  
- 
+#
